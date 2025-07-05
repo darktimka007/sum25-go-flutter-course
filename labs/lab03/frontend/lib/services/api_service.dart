@@ -204,6 +204,11 @@ class ApiService {
 
   // Get HTTP status information
   Future<HTTPStatusResponse> getHTTPStatus(int statusCode) async {
+    // Validate status code range before making the request
+    if (statusCode < 100 || statusCode >= 600) {
+      throw ApiException('Invalid HTTP status code: $statusCode. Must be between 100 and 599.');
+    }
+    
     try {
       final response = await _client
           .get(

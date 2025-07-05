@@ -61,6 +61,13 @@ jobs:
             echo "handlers_passed=true" >> $GITHUB_OUTPUT
           fi
 
+      - name: Start backend server
+        run: |
+          cd labs/lab03/backend
+          go run main.go &
+          echo $! > backend.pid
+          sleep 5  # Wait for server to start
+
       - name: Run Flutter tests
         id: flutter-tests
         run: |
@@ -77,6 +84,14 @@ jobs:
           fi
           if flutter test test/integration_test.dart; then
             echo "integration_passed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Stop backend server
+        if: always()
+        run: |
+          if [ -f labs/lab03/backend/backend.pid ]; then
+            kill $(cat labs/lab03/backend/backend.pid) || true
+            rm labs/lab03/backend/backend.pid
           fi
 
       - name: Calculate score
