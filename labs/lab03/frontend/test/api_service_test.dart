@@ -330,12 +330,29 @@ void main() {
 
       test('should validate status code ranges', () async {
         // Test that invalid status codes throw ApiException immediately (before network call)
-        expect(
-            () => ApiService().getHTTPStatus(99), throwsA(isA<ApiException>()));
-        expect(() => ApiService().getHTTPStatus(600),
-            throwsA(isA<ApiException>()));
-        expect(
-            () => ApiService().getHTTPStatus(-1), throwsA(isA<ApiException>()));
+        try {
+          await ApiService().getHTTPStatus(99);
+          fail('Expected validation error for status code 99');
+        } catch (e) {
+          expect(e, isA<ApiException>());
+          expect(e.toString(), contains('Invalid HTTP status code: 99'));
+        }
+
+        try {
+          await ApiService().getHTTPStatus(600);
+          fail('Expected validation error for status code 600');
+        } catch (e) {
+          expect(e, isA<ApiException>());
+          expect(e.toString(), contains('Invalid HTTP status code: 600'));
+        }
+
+        try {
+          await ApiService().getHTTPStatus(-1);
+          fail('Expected validation error for status code -1');
+        } catch (e) {
+          expect(e, isA<ApiException>());
+          expect(e.toString(), contains('Invalid HTTP status code: -1'));
+        }
 
         // Test that valid status codes pass validation but fail with network errors
         // We need to catch the network error to verify it's not a validation error
