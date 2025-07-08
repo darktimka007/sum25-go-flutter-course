@@ -1,0 +1,138 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:convert';
+
+class SecureStorageService {
+  static const FlutterSecureStorage _storage = FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+    ),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+    ),
+  );
+
+  // Authentication token keys
+  static const String _authTokenKey = 'auth_token';
+  static const String _usernameKey = 'username';
+  static const String _passwordKey = 'password';
+  static const String _biometricEnabledKey = 'biometric_enabled';
+
+  // Save authentication token securely
+  static Future<void> saveAuthToken(String token) async {
+    await _storage.write(key: _authTokenKey, value: token);
+  }
+
+  // Get authentication token from secure storage
+  static Future<String?> getAuthToken() async {
+    return await _storage.read(key: _authTokenKey);
+  }
+
+  // Delete authentication token from secure storage
+  static Future<void> deleteAuthToken() async {
+    await _storage.delete(key: _authTokenKey);
+  }
+
+  // Save user credentials securely
+  static Future<void> saveUserCredentials(
+      String username, String password) async {
+    await Future.wait([
+      _storage.write(key: _usernameKey, value: username),
+      _storage.write(key: _passwordKey, value: password),
+    ]);
+  }
+
+  // Get user credentials from secure storage
+  static Future<Map<String, String?>> getUserCredentials() async {
+    final results = await Future.wait([
+      _storage.read(key: _usernameKey),
+      _storage.read(key: _passwordKey),
+    ]);
+
+    return {
+      'username': results[0],
+      'password': results[1],
+    };
+  }
+
+  // Delete user credentials from secure storage
+  static Future<void> deleteUserCredentials() async {
+    await Future.wait([
+      _storage.delete(key: _usernameKey),
+      _storage.delete(key: _passwordKey),
+    ]);
+  }
+
+  // Save biometric setting securely
+  static Future<void> saveBiometricEnabled(bool enabled) async {
+    await _storage.write(key: _biometricEnabledKey, value: enabled.toString());
+  }
+
+  // Get biometric setting from secure storage
+  static Future<bool> isBiometricEnabled() async {
+    final value = await _storage.read(key: _biometricEnabledKey);
+    if (value == null) {
+      return false; // Default to false if not set
+    }
+    return value.toLowerCase() == 'true';
+  }
+
+  // Save any secure data with custom key
+  static Future<void> saveSecureData(String key, String value) async {
+    await _storage.write(key: key, value: value);
+  }
+
+  // Get secure data by key
+  static Future<String?> getSecureData(String key) async {
+    return await _storage.read(key: key);
+  }
+
+  // Delete secure data by key
+  static Future<void> deleteSecureData(String key) async {
+    await _storage.delete(key: key);
+  }
+
+  // Save object as JSON string in secure storage
+  static Future<void> saveObject(
+      String key, Map<String, dynamic> object) async {
+    final jsonString = jsonEncode(object);
+    await _storage.write(key: key, value: jsonString);
+  }
+
+  // Get object from secure storage
+  static Future<Map<String, dynamic>?> getObject(String key) async {
+    final jsonString = await _storage.read(key: key);
+    if (jsonString == null) {
+      return null;
+    }
+
+    try {
+      return jsonDecode(jsonString) as Map<String, dynamic>;
+    } catch (e) {
+      // Return null if JSON parsing fails
+      return null;
+    }
+  }
+
+  // Check if key exists in secure storage
+  static Future<bool> containsKey(String key) async {
+    final value = await _storage.read(key: key);
+    return value != null;
+  }
+
+  // Get all keys from secure storage
+  static Future<List<String>> getAllKeys() async {
+    final allData = await _storage.readAll();
+    return allData.keys.toList();
+  }
+
+  // Clear all data from secure storage
+  static Future<void> clearAll() async {
+    await _storage.deleteAll();
+  }
+
+  // Export all data (for backup purposes)
+  // NOTE: This defeats the purpose of secure storage, use carefully
+  static Future<Map<String, String>> exportData() async {
+    return await _storage.readAll();
+  }
+}
